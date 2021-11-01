@@ -48,6 +48,17 @@
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+
+        /* When the width of the map application is smaller than 1024px, the side panel disappears.*/
+        @media screen and (max-width: 1024px) {
+            table {
+                display: none;
+            }
+            #table {
+                display: none;
+            }
+        }
+
     </style>
 </head>
 
@@ -61,9 +72,9 @@
 
             <table>
                 <tr>
-                    <th>id</th>
-                    <th>Distance</th>
+                    <th>ID</th>
                     <th>Region</th>
+                    <th>Distance</th>
                 </tr>
             </table>
 
@@ -77,38 +88,37 @@
         const map = new mapboxgl.Map({
             container: 'map', // container ID
             style: 'mapbox://styles/mapbox/navigation-night-v1', // style URL
-            zoom: 5.5, // starting zoom
-            center: [10.8231,106.6297] // starting center
+            zoom: 5, // starting zoom
+            center: [108, 14] // starting center
         });
 
 
         async function geojsonFetch() {
 
-
-            let response = await fetch('assets/earthquakes.geojson');
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            let earthquakes = await response.json();
-
-
-            response = await fetch('assets/japan.json');
+            let response = await fetch('assets/tourist_activities.geojson');
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            let japan = await response.json();
+            let tourist_activities = await response.json();
+
+
+            response = await fetch('assets/Vietnam.geojson');
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            let Vietnam = await response.json();
 
 
             var table = document.getElementsByTagName("table");
-            for (let i = 0; i < earthquakes.features.length; i++) {
-                // console.log(earthquakes.features[i].properties.id);
+            for (let i = 0; i < tourist_activities.features.length; i++) {
+                // console.log(tourist_activities.features[i].properties.id);
 
-                var lng = await earthquakes.features[i].geometry.coordinates[0];
-                var lat = await earthquakes.features[i].geometry.coordinates[1];
+                var lng = await tourist_activities.features[i].geometry.coordinates[0];
+                var lat = await tourist_activities.features[i].geometry.coordinates[1];
 
                 // Create an empty <tr> element and add it to the 1st position of the table:
                 var row = table[0].insertRow(-1);
@@ -116,9 +126,9 @@
                 var cell1 = row.insertCell(0);
                 var cell2 = row.insertCell(1);
                 var cell3 = row.insertCell(2);
-                cell1.innerHTML = await earthquakes.features[i].properties.id;
-                cell2.innerHTML = await earthquakes.features[i].properties.mag;
-                cell3.innerHTML = await new Date(earthquakes.features[i].properties.time).toLocaleDateString("en-US");
+                cell1.innerHTML = await tourist_activities.features[i].properties.id;
+                cell2.innerHTML = await tourist_activities.features[i].properties.region;
+                cell3.innerHTML = await tourist_activities.features[i].properties.distance_from_HCMC_KM;
 
             }
 
@@ -129,15 +139,15 @@
 
 
 
-                map.addSource('earthquakes', {
+                map.addSource('tourist_activities', {
                     type: 'geojson',
-                    data: earthquakes
+                    data: tourist_activities
                 });
 
                 map.addLayer({
-                    'id': 'earthquakes-layer',
+                    'id': 'tourist_activities-layer',
                     'type': 'circle',
-                    'source': 'earthquakes',
+                    'source': 'tourist_activities',
                     'paint': {
                         'circle-radius': 8,
                         'circle-stroke-width': 2,
@@ -147,15 +157,15 @@
                 });
 
 
-                map.addSource('japan', {
+                map.addSource('Vietnam', {
                     type: 'geojson',
-                    data: japan
+                    data: Vietnam
                 });
 
                 map.addLayer({
-                    'id': 'japan-layer',
+                    'id': 'Vietnam-layer',
                     'type': 'fill',
-                    'source': 'japan',
+                    'source': 'Vietnam',
                     'paint': {
                         'fill-color': '#0080ff', // blue color fill
                         'fill-opacity': 0.5
@@ -175,13 +185,13 @@
         }
 
         geojsonFetch()
-            .catch(e => {
-                console.log('There has been a problem with your fetch operation: ' + e.message);
-            });
+
+            let btn = document.getElementsByTagName("button")[0];
+
+            btn.addEventListener('click', sortTable);
 
 
-
-        function sortTable() {
+        function sortTable(e) {
             var table, rows, switching, i, x, y, shouldSwitch;
             table = document.getElementsByTagName("table")[0];
             switching = true;
@@ -198,8 +208,8 @@
                     shouldSwitch = false;
                     /*Get the two elements you want to compare,
                     one from current row and one from the next:*/
-                    x = parseFloat(rows[i].getElementsByTagName("td")[1].innerHTML);
-                    y = parseFloat(rows[i + 1].getElementsByTagName("td")[1].innerHTML);
+                    x = parseFloat(rows[i].getElementsByTagName("td")[2].innerHTML);
+                    y = parseFloat(rows[i + 1].getElementsByTagName("td")[2].innerHTML);
                     //check if the two rows should switch place:
                     if (x < y) {
                         //if so, mark as a switch and break the loop:
